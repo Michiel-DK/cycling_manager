@@ -12,8 +12,7 @@ def scrape_participants(tour:str, year:int) -> list:
     
     # define url for startlist
     url = f'https://www.procyclingstats.com/race/{tour}/{year}/gc/startlist'
-    print(url)
-    print(stylize(f"scrape participants", colored.fg("blue")))
+    print(stylize(f"scrape participants for {tour} - {year}", colored.fg("blue")))
     
     #scrape page
     response = requests.get(url).content
@@ -44,13 +43,13 @@ def scrape_performance(rider:str, endpoint:str, year:int) -> list:
     """Function to scrape performance of participant in tour"""
     
     #set up
-    print(stylize(f"scrape performance", colored.fg("red")))
+    print(stylize(f"scrape performance for {rider}", colored.fg("red")))
     
     base_url = 'https://www.procyclingstats.com/'
     url = base_url+endpoint+'/'+str(year)
     
     response = requests.get(url).content
-    soup = BeautifulSoup(response)
+    soup = BeautifulSoup(response, "html.parser")
     
     result_ls = []
     
@@ -66,7 +65,7 @@ def scrape_performance(rider:str, endpoint:str, year:int) -> list:
         dict['date'] = o[0].text
         if len(dict['date']) == 0:
             dict['type'] = 'gc'
-        dict['result'] = o[1].text
+        dict['result'] = o[1].text.replace('*', '')
         dict['gc'] = o[2].text
         try:
             dict['icon'] = o[3].find('span', class_='icon')['class'][-1]
@@ -92,7 +91,7 @@ def scrape_performance(rider:str, endpoint:str, year:int) -> list:
         dict['year'] = str(year)
         dict['type'] = 'one_day'
         dict['date'] = o[0].text
-        dict['result'] = o[1].text
+        dict['result'] = o[1].text.replace('*', '')
         dict['gc'] = o[2].text
         try:
             dict['icon'] = o[3].find('span', class_='icon')['class'][-1]
@@ -114,8 +113,6 @@ def clean_df(ls:list) -> pd.DataFrame:
     
     """Function to clean performance DF"""
     
-    print(stylize(f"clean df", colored.fg("yellow")))
-    
     stage_s = list(np.arange(2,32,2))+list(np.arange(32,48,4))+[50]
     stage_s_i = list(np.arange(1,21,1))
     stage_s_dict = dict(zip(stage_s_i, stage_s[::-1]))
@@ -131,28 +128,26 @@ def clean_df(ls:list) -> pd.DataFrame:
     dropped_df = dropped_df.drop(index_drop)
     
     dropped_df['date'] = pd.to_datetime(dropped_df['date'] + '.' + dropped_df['year'], infer_datetime_format=True)
-    
+        
     dropped_df['result'] =  dropped_df['result'].replace('DNF', 0).replace('DNS', 0).replace('OTL', 0).replace('DSQ', 0).replace('DF', 0).astype('int')
     
     dropped_df['points'] = dropped_df['result'].map(stage_s_dict).fillna('0').astype('int')
     
+    print(stylize(f"clean df shape {dropped_df.shape}", colored.fg("yellow")))
     return dropped_df
 
 def get_profile(ls:list, clean_df:pd.DataFrame) -> list:
     extra_info_ls = []
     i=0
     
-    print(stylize(f"get profile", colored.fg("green")))
-    
     for ref in ls:
-        print(i/len(clean_df.race_ref.unique()))
+        print(stylize(f"get profile for {ref} - {round(i/len(clean_df.race_ref.unique()),3)}% done", colored.fg("green")))
         #create url
         base_url = 'https://www.procyclingstats.com/'
         url = base_url + ref
         response = requests.get(url).content
         soup = BeautifulSoup(response)
-        
-        print(url)
+
         
         #get al info
         dict = {}
@@ -239,7 +234,7 @@ def run_scraper(tours:list, years:list)-> pd.DataFrame:
     
     #tour_profile_df = pd.DataFrame(get_profile(get_tour_stages(tours)))
     
-    past_profile_df = pd.DataFrame(get_profile(performance_clean.race_ref.unique())).rename(columns={'href':'race_ref'})
+    past_profile_df = pd.DataFrame(get_profile(performance_clean.race_ref.unique(), performance_clean)).rename(columns={'href':'race_ref'})
     
     merged = performance_clean.merge(past_profile_df, on='race_ref')
     merged['points'] = merged['points'].astype('float')
