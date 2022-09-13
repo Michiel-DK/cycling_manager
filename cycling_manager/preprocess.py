@@ -192,6 +192,35 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
             
             merged['gt_binary'] = merged['race_name'].map(lambda x: 1 if x in grand_tours else 0)
             
+            #add key for DB later
+            merged['key'] = merged['name'] + '-' + merged['year'].astype('str') + '-' + merged['race_name']
+
+            def change_bin(x):
+                if x == 0:
+                    return -1000.
+                elif x < 21:
+                    return 1.
+                else:
+                    return 2
+                
+            merged['result_bin'] = merged['result'].apply(change_bin)
+            merged = merged[merged['result_bin'] != -1000.]
+
+            def get_types_bin(x):
+                if x == 'etappe':
+                    return 0
+                else:
+                    return 1
+                
+            def icon_bin(x):
+                if x == 'stage':
+                    return 0
+                else:
+                    return 1
+                
+            merged['types_bin'] = merged['type'].apply(get_types_bin)
+            merged['icon_bin'] = merged['icon'].apply(icon_bin)
+            
             return merged
     
     #get data
@@ -218,3 +247,5 @@ if __name__ == '__main__':
     merged = get_data()
     
     preprocessed = preprocess(merged)
+    
+    print(preprocessed.columns)
