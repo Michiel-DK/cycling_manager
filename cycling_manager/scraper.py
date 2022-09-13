@@ -141,12 +141,12 @@ def get_profile(ls:list, clean_df:pd.DataFrame) -> list:
     i=0
     
     for ref in ls:
-        print(stylize(f"get profile for {ref} - {round(i/len(clean_df.race_ref.unique()),3)}% done", colored.fg("green")))
+        print(stylize(f"get profile for {ref} - {100*round(i/len(clean_df.race_ref.unique()),3)}% done", colored.fg("green")))
         #create url
         base_url = 'https://www.procyclingstats.com/'
         url = base_url + ref
         response = requests.get(url).content
-        soup = BeautifulSoup(response)
+        soup = BeautifulSoup(response, "html.parser")
 
         
         #get al info
@@ -238,6 +238,8 @@ def run_scraper(tours:list, years:list)-> pd.DataFrame:
     
     merged = performance_clean.merge(past_profile_df, on='race_ref')
     merged['points'] = merged['points'].astype('float')
+    merged['ProfileScore:'] = merged['ProfileScore:'].astype('float')
+    merged['Startlist quality score:'] = merged['Startlist quality score:'].astype('float')
     merged['adjusted_points'] = merged['points'] * merged['ProfileScore:']  * merged['Startlist quality score:']    
     
     return merged
