@@ -48,7 +48,7 @@ def combine_model(X_encoder, X_decoder):
 
 def compile_model(model):
     
-    model.compile(optimizer=Adam(), loss='hinge', metrics=['accuracy'])
+    model.compile(optimizer=Adam(), loss='hinge', metrics=[Precision()])
 
     return model
 
@@ -57,7 +57,7 @@ def train_model(model: Model,
                 x_decoder: np.ndarray,
                 y: np.ndarray,
                 batch_size=128,
-                patience=4,
+                patience=20,
                 validation_split=0.3,
                 validation_data=None) -> Tuple[Model, dict]:
     """

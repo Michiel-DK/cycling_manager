@@ -5,6 +5,7 @@ import datetime
 import colored
 from colored import stylize
 import os
+from typing import Tuple
 
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -13,6 +14,11 @@ from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
 def get_data(local=True) -> pd.DataFrame:
+    
+    """
+    Function to return fully merged df
+    """
+    
     if local:
         merged1 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean.csv', index_col=0)
         merged2 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_2.csv', index_col=0)
@@ -36,8 +42,16 @@ def get_data(local=True) -> pd.DataFrame:
 
 def preprocess(df:pd.DataFrame) -> pd.DataFrame:
     
+    """
+    Preprocess entire df
+    """
+    
     def vert_meters(df:pd.DataFrame) -> pd.DataFrame:
     #get data
+    
+        """
+        Standard scale + Decistion tree to impute vertical meters
+        """
         merged = df.copy()
         
         #preprocess vertical meters
@@ -75,6 +89,10 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
         return vert_na
     
     def profile_score(df:pd.DataFrame) -> pd.DataFrame:
+        
+        """
+        Standard scale + Decistion tree to impute profile score
+        """
         
         merged = df.copy()
         
@@ -120,6 +138,10 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
     
     def parcours_type(df:pd.DataFrame) -> pd.DataFrame:
         
+        """
+        Standard scale + Decistion tree to impute parcours type
+        """
+        
         merged = df.copy()
         
         knn = KNeighborsClassifier(n_neighbors=5)
@@ -161,6 +183,10 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
         return p0
     
     def general_preprocess(df:pd.DataFrame) -> pd.DataFrame:
+        
+            """
+            preprocess categorical + y_variable
+            """
         
             merged = df.copy()
             
@@ -243,10 +269,32 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
     
     return merged
 
+def split(df:pd.DataFrame, 
+          start: int = 2017,
+          end: int = 2022) -> Tuple:
+    
+    """
+    split df into train and test
+    """
+    
+    df_predict = df[df['year'] == end]
+    df_train = df[(df['year'] > start) & (df['year'] != end)]
+    
+    #riders to predict
+    riders_predict = df_predict[(df_predict['race_name']=='tour-de-france')| (df_predict['race_name']=='vuelta-a-espana')| (df_predict['race_name']=='giro-d-italia')][['name', 'year', 'race_name']]
+    riders_predict = riders_predict[riders_predict['year'] == end].drop_duplicates().reset_index(drop=True)
+    
+    riders = df_train[(df_train['race_name']=='tour-de-france')| (df_train['race_name']=='vuelta-a-espana')| (df_train['race_name']=='giro-d-italia')][['name', 'year', 'race_name']]
+    riders = riders[riders['year'] != 2022].drop_duplicates().reset_index(drop=True).sort_values(by='year', ascending=False)
+    
+    return riders_predict, riders
+
 
 if __name__ == '__main__':
     merged = get_data()
     
     preprocessed = preprocess(merged)
+    
+    split(preprocessed)
     
     print(preprocessed.columns)
