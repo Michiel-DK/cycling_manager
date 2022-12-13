@@ -21,7 +21,7 @@ defusedxml==0.7.1
 entrypoints==0.4
 executing==0.8.3
 fastjsonschema==2.15.3
-flatbuffers==1.12
+flatbuffers>=2.0
 fonttools==4.33.3
 gast==0.4.0
 google-auth==2.9.1
@@ -42,7 +42,7 @@ jsonschema==4.4.0
 jupyter-client==7.2.2
 jupyter-core==4.10.0
 jupyterlab-pygments==0.2.2
-keras==2.8.0
+keras==2.10.0
 Keras-Preprocessing==1.1.2
 kiwisolver==1.4.2
 libclang==14.0.1
@@ -92,12 +92,7 @@ six==1.16.0
 sklearn==0.0
 soupsieve==2.3.2.post1
 stack-data==0.2.0
-tensorboard==2.8.0
-tensorboard-data-server==0.6.1
-tensorboard-plugin-wit==1.8.1
-tensorflow-estimator==2.9.0
-tensorflow-io-gcs-filesystem==0.26.0
-tensorflow-macos==2.8.0
+tensorflow-macos==2.10.0
 termcolor==1.1.0
 terminado==0.13.3
 tf-estimator-nightly==2.8.0.dev2021122109
