@@ -1,14 +1,12 @@
 import pandas as pd
 import numpy as np
-import torch
 import matplotlib.pyplot as plt
 from typing import Tuple
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
-import tensorflow as tf
 
-from tf.keras import Input, Dense, LSTM, TimeDistributed, Concatenate, Add, Masking, GRU, RepeatVector, Dot, Bidirectional
+from tensorflow.keras.layers import Input, Dense, LSTM, TimeDistributed, Concatenate, Add, Masking, GRU, RepeatVector, Dot, Bidirectional
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import RMSprop, Adam
 from tensorflow.keras.callbacks import EarlyStopping
@@ -31,7 +29,7 @@ def encoder(encoder_features):
 def decoder(decoder_features, encoder_outputs):
     x = Concatenate(axis=-1)([decoder_features, encoder_outputs])
     # x = Add()([decoder_features, encoder_outputs]) 
-    x = Masking(mask_value = 0)(x)
+    x = Masking(mask_value = -1000.)(x)
     x = TimeDistributed(Dense(units=32, activation='relu'))(x)
     x = TimeDistributed(Dense(units=16, activation='relu'))(x)
     x = TimeDistributed(Dense(units=6, activation='relu'))(x)
@@ -50,7 +48,7 @@ def combine_model(X_encoder, X_decoder):
 
 def compile_model(model):
     
-    model.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['precision'])
+    model.compile(optimizer=Adam(clipnorm=1.0), loss='binary_crossentropy', metrics=["accuracy"])
 
     return model
 
@@ -58,7 +56,7 @@ def train_model(model: Model,
                 x_encoder: np.ndarray,
                 x_decoder: np.ndarray,
                 y: np.ndarray,
-                batch_size=64,
+                batch_size=128,
                 patience=4,
                 validation_split=0.3,
                 validation_data=None) -> Tuple[Model, dict]:
@@ -73,13 +71,10 @@ def train_model(model: Model,
 
     history = model.fit([x_encoder, x_decoder],
                         y,
-                        validation_split=validation_split,
-                        validation_data=validation_data,
                         epochs=1000,
                         batch_size=batch_size,
                         callbacks=[es],
-                        verbose=0)
+                        verbose=1)
 
-    print(f"\n✅ model trained ({len(X)} rows)")
 
     return model, history
