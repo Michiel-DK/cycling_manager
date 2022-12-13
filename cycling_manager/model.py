@@ -1,18 +1,19 @@
 import pandas as pd
 import numpy as np
 import torch
-from keras.preprocessing.sequence import pad_sequences
 import matplotlib.pyplot as plt
+from typing import Tuple
 
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
+import tensorflow as tf
 
-from tensorflow.keras.layers import Input, Dense, LSTM, TimeDistributed, Concatenate, Add, Masking, GRU, RepeatVector, Dot, Bidirectional
+from tf.keras import Input, Dense, LSTM, TimeDistributed, Concatenate, Add, Masking, GRU, RepeatVector, Dot, Bidirectional
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import RMSprop, Adam
 from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.metrics import MAE, MSE, RootMeanSquaredError, Recall, Precision, Accuracy, CategoricalAccuracy
-from keras.preprocessing.sequence import pad_sequences
+from keras_preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
 
 # define the encoder and decoder -> clean
@@ -34,5 +35,51 @@ def decoder(decoder_features, encoder_outputs):
     x = TimeDistributed(Dense(units=32, activation='relu'))(x)
     x = TimeDistributed(Dense(units=16, activation='relu'))(x)
     x = TimeDistributed(Dense(units=6, activation='relu'))(x)
-    y = TimeDistributed(Dense(units=2, activation='softmax'))(x)
+    y = TimeDistributed(Dense(units=1, activation='sigmoid'))(x)
     return y
+
+def combine_model(X_encoder, X_decoder):
+    
+    encoder_features = Input(shape=X_encoder.shape[1:])
+    decoder_features = Input(shape=X_decoder.shape[1:])
+    encoder_outputs = encoder(encoder_features)
+    decoder_outputs = decoder(decoder_features, encoder_outputs)
+    model = Model([encoder_features, decoder_features], decoder_outputs)
+    
+    return model
+
+def compile_model(model):
+    
+    model.compile(optimizer=Adam(learning_rate=0.0001), loss='binary_crossentropy', metrics=['precision'])
+
+    return model
+
+def train_model(model: Model,
+                x_encoder: np.ndarray,
+                x_decoder: np.ndarray,
+                y: np.ndarray,
+                batch_size=64,
+                patience=4,
+                validation_split=0.3,
+                validation_data=None) -> Tuple[Model, dict]:
+    """
+    Fit model and return a the tuple (fitted_model, history)
+    """
+
+    es = EarlyStopping(monitor="val_loss",
+                       patience=patience,
+                       restore_best_weights=True,
+                       verbose=0)
+
+    history = model.fit([x_encoder, x_decoder],
+                        y,
+                        validation_split=validation_split,
+                        validation_data=validation_data,
+                        epochs=1000,
+                        batch_size=batch_size,
+                        callbacks=[es],
+                        verbose=0)
+
+    print(f"\n✅ model trained ({len(X)} rows)")
+
+    return model, history

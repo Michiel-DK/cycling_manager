@@ -200,8 +200,7 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
                     return -1000.
                 elif x < 21:
                     return 1.
-                else:
-                    return 2
+
                 
             merged['result_bin'] = merged['result'].apply(change_bin)
             merged = merged[merged['result_bin'] != -1000.]

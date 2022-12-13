@@ -3,7 +3,7 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 
-from keras.preprocessing.sequence import pad_sequences
+from keras_preprocessing.sequence import pad_sequences
 
 
 
@@ -66,7 +66,7 @@ def get_scaler(maxlen, df, riders):
             
     return X_enc_mm, X_dec_mm#, y_train_mm
 
-def get_sequences(maxlen, df, riders, X_encoder, X_decoder):
+def get_sequences(maxlen, df, riders, enc_scaler, dec_scaler):
     
     X_encoder_ls = []
     X_decoder_ls = []
@@ -80,7 +80,7 @@ def get_sequences(maxlen, df, riders, X_encoder, X_decoder):
         
         if year != 2000:
             
-                #print(rider, year, tour)
+                print(rider, year, tour)
             
             #try:
             
@@ -91,8 +91,8 @@ def get_sequences(maxlen, df, riders, X_encoder, X_decoder):
                     print(rider, year, tour, X_encoder.shape)
                 
                 else:
-                    X_encoder = X_encoder.transform(X_encoder)
-                    X_decoder = X_decoder.transform(X_decoder)
+                    X_encoder = enc_scaler.transform(X_encoder)
+                    X_decoder = dec_scaler.transform(X_decoder)
                     #y = y_train_mm.transform(y_decoder)
                     
                     X_encoder_pad = pad_sequences(X_encoder.T, maxlen=maxlen, dtype='float', padding='pre', value=-1000.).T
