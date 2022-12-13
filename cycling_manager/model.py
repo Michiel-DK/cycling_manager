@@ -48,7 +48,7 @@ def combine_model(X_encoder, X_decoder):
 
 def compile_model(model):
     
-    model.compile(optimizer=Adam(clipnorm=1.0), loss='binary_crossentropy', metrics=["accuracy"])
+    model.compile(optimizer=Adam(), loss='hinge', metrics=['accuracy'])
 
     return model
 
@@ -71,6 +71,8 @@ def train_model(model: Model,
 
     history = model.fit([x_encoder, x_decoder],
                         y,
+                        validation_split=validation_split,
+                        validation_data=validation_data,
                         epochs=1000,
                         batch_size=batch_size,
                         callbacks=[es],

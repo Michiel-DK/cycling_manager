@@ -25,6 +25,14 @@ def get_sequence(df, name, year, tour, weeks=52):
                 X_encoder[i] = 0.0
                 
         X_encoder = X_encoder[['fl', 'mo_fl', 'hi_fl', 'hi_hi', 'mo_mo', 'distance','result', 'ProfileScore:','Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']]
+        
+        if X_encoder.isna().sum().sum() > 0:
+            X_encoder.dropna(inplace=True)
+            print(name, year, tour)
+            
+        else:
+            pass
+        
     
     else:
         pass
@@ -80,7 +88,7 @@ def get_sequences(maxlen, df, riders, enc_scaler, dec_scaler):
         
         if year != 2000:
             
-                print(rider, year, tour)
+                #print(rider, year, tour)
             
             #try:
             
