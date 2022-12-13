@@ -6,8 +6,9 @@ from colorama import Fore, Style
 from cycling_manager.sequences import *
 from cycling_manager.preprocess import *
 from cycling_manager.model import *
+from cycling_manager.registry import *
 
-def preprocess(
+def preproc(
     start: int,
     end: int
 ) -> pd.DataFrame:
@@ -22,33 +23,57 @@ def preprocess(
     
     return df, train, test
 
-def get_seq(train, test, df, maxlen):
+def get_seq(values, df, maxlen):
     
-    X_enc_ss, X_dec_ss = get_scaler(80, df, train)
+    X_enc_ss, X_dec_ss = get_scaler(80, df, values)
     
-    X_encoder_train, X_decoder_train, y_decoder_train = get_sequences(maxlen, df, train, X_enc_ss, X_dec_ss)
-    X_encoder_test, X_decoder_test, y_decoder_test = get_sequences(maxlen, df, test, X_enc_ss, X_dec_ss)
+    print(Fore.GREEN + f"\Scaler done..." + Style.RESET_ALL)
+    
+    X_encoder, X_decoder, y_decoder = get_sequences(maxlen, df, values, X_enc_ss, X_dec_ss)
     
     print(Fore.GREEN + f"\nSequencing done..." + Style.RESET_ALL)
     
-    return X_encoder_train, X_decoder_train, y_decoder_train, X_encoder_test, X_decoder_test, y_decoder_test 
+    return X_encoder, X_decoder, y_decoder
 
 def train(start=2017, end=2022, maxlen=80):
     
     #get train test data
-    df, train, test = preprocess(start, end)
+    df, train, test = preproc(start, end)
     
     #get train sequences
-    X_encoder_train, X_decoder_train, y_decoder_train = get_seq(train, test, df, maxlen)
+    X_encoder_train, X_decoder_train, y_decoder_train = get_seq(train, df, maxlen)
+    
+    print(Fore.CYAN + f"\n{X_encoder_train.shape, X_decoder_train.shape, y_decoder_train.shape}" + Style.RESET_ALL)
     
     #create model
-    model = combine_model(X_decoder_train, X_decoder_train)
+    model = combine_model(X_encoder_train, X_decoder_train)
 
     #compile model
-    model = model.compile(model)
+    model = compile_model(model)
     
-    model, history = train_model(model, X_encoder_train, X_decoder_train, y_decoder_train\
-        batch_size=128, patience=10, validation_split=0.2, validation_data=None)
+    model, history = train_model(model, X_encoder_train, X_decoder_train, y_decoder_train,\
+        batch_size=128, patience=5, validation_split=0.2, validation_data=None)
+    
+    metrics = np.min(history.history)
+    
+    params = dict(
+        # Model parameters
+        start=start,
+        end=end,
+        maxlen=maxlen)
+    
+    metrics = dict(
+        accuracy='accuracy'
+    )
+    
+    save_model(model, params=params, metrics=metrics)
+    
+    return None
+    
+
+if __name__=='__main__':
+    train(start=2005, end=2022, maxlen=80)
+    
     
     
     

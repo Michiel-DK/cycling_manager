@@ -3,6 +3,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 from typing import Tuple
 
+from colorama import Fore, Style
+
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 
@@ -44,11 +46,15 @@ def combine_model(X_encoder, X_decoder):
     decoder_outputs = decoder(decoder_features, encoder_outputs)
     model = Model([encoder_features, decoder_features], decoder_outputs)
     
+    print(Fore.YELLOW + f"\nCombined model..." + Style.RESET_ALL)
+    
     return model
 
 def compile_model(model):
     
-    model.compile(optimizer=Adam(), loss='hinge', metrics=[Precision()])
+    model.compile(optimizer='rmsprop', loss='hinge', metrics=[Precision()])
+    
+    print(Fore.YELLOW + f"\Compile model..." + Style.RESET_ALL)
 
     return model
 

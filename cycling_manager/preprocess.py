@@ -20,11 +20,11 @@ def get_data(local=True) -> pd.DataFrame:
     """
     
     if local:
-        merged1 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean.csv', index_col=0)
-        merged2 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_2.csv', index_col=0)
-        merged3 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_tdf2022.csv', index_col=0)
-        merged4 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_10s.csv', index_col=0)
-        merged5 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_vuelta2022.csv', index_col=0)
+        merged1 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean.csv', index_col=0)
+        merged2 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean_2.csv', index_col=0)
+        merged3 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean_tdf2022.csv', index_col=0)
+        merged4 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean_10s.csv', index_col=0)
+        merged5 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean_vuelta2022.csv', index_col=0)
         
         merged = pd.concat([merged1, merged2, merged3, merged4, merged5], ignore_index=True)
         
@@ -287,7 +287,7 @@ def split(df:pd.DataFrame,
     riders = df_train[(df_train['race_name']=='tour-de-france')| (df_train['race_name']=='vuelta-a-espana')| (df_train['race_name']=='giro-d-italia')][['name', 'year', 'race_name']]
     riders = riders[riders['year'] != 2022].drop_duplicates().reset_index(drop=True).sort_values(by='year', ascending=False)
     
-    return riders_predict, riders
+    return riders, riders_predict
 
 
 if __name__ == '__main__':

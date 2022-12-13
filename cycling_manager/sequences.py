@@ -88,7 +88,7 @@ def get_sequences(maxlen, df, riders, enc_scaler, dec_scaler):
         
         if year != 2000:
             
-                #print(rider, year, tour)
+                print(rider, year, tour)
             
             #try:
             
