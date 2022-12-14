@@ -9,9 +9,9 @@ from cycling_manager.model import *
 from cycling_manager.registry import *
 
 def preproc(
-    start: int,
-    end: int
-) -> pd.DataFrame:
+        start : int,
+        end : int
+    ) -> pd.DataFrame:
     
     """ full preprocess data + split """
     
@@ -23,7 +23,12 @@ def preproc(
     
     return df, train, test
 
-def get_seq(values, df, maxlen):
+def get_seq(
+        values : pd.DataFrame, 
+        df : pd.DataFrame, 
+        maxlen : int) -> Tuple:
+    
+    """get scaler based on given df and maxlength of sequences"""
     
     X_enc_ss, X_dec_ss = get_scaler(80, df, values)
     
@@ -35,7 +40,11 @@ def get_seq(values, df, maxlen):
     
     return X_encoder, X_decoder, y_decoder
 
-def train(start=2017, end=2022, maxlen=80):
+def train(start:int = 2017,
+          end: int = 2022, 
+          maxlen: int = 80) -> None:
+    
+    """train model and save locally"""
     
     #get train test data
     df, train, test = preproc(start, end)
@@ -63,7 +72,7 @@ def train(start=2017, end=2022, maxlen=80):
         maxlen=maxlen)
     
     metrics = dict(
-        accuracy='accuracy'
+        accuracy='precision'
     )
     
     save_model(model, params=params, metrics=metrics)

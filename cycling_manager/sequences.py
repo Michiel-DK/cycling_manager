@@ -7,7 +7,7 @@ from keras_preprocessing.sequence import pad_sequences
 
 
 
-def get_sequence(df, name, year, tour, weeks=52):
+def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80):
     
     #get tour data
     if year != 2000:
@@ -15,7 +15,7 @@ def get_sequence(df, name, year, tour, weeks=52):
         y_decoder = tour_data[['date', 'result_bin']].set_index('date')
         X_decoder = tour_data[['date', 'distance', 'ProfileScore:', 'Vert. meters:', 'Startlist quality score:', 'parcours_type_num']].set_index('date')
         
-        season_data = df[(df['name'] == name) & (df['date'] < min(tour_data['date'])) & (df['date'] >= min(tour_data['date']) - datetime.timedelta(weeks=weeks))].sort_values(by='date')
+        season_data = df[(df['name'] == name) & (df['date'] < min(tour_data['date'])) & (df['date'] >= min(tour_data['date']) - datetime.timedelta(weeks=maxlen))].sort_values(by='date')
         X_encoder = season_data[['date', 'adjusted_points','result','distance', 'ProfileScore:', 'Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']].set_index('date')
         performance = X_encoder.pivot_table('adjusted_points', 'date','parcours_type_num').shift(1).fillna(0).cumsum().reset_index()
         X_encoder = performance.merge(X_encoder, on='date').set_index('date').drop(columns='adjusted_points').rename(columns={1.0 : 'fl', 2.0:'hi_fl', 3.0: 'hi_hi', 4.0:'mo_fl', 5.0:'mo_mo'})
@@ -25,11 +25,11 @@ def get_sequence(df, name, year, tour, weeks=52):
                 X_encoder[i] = 0.0
                 
         X_encoder = X_encoder[['fl', 'mo_fl', 'hi_fl', 'hi_hi', 'mo_mo', 'distance','result', 'ProfileScore:','Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']]
-        
+        #import ipdb; ipdb.set_trace()
         if X_encoder.isna().sum().sum() > 0:
             X_encoder.dropna(inplace=True)
             print(name, year, tour)
-            
+    
         else:
             pass
         
@@ -37,7 +37,7 @@ def get_sequence(df, name, year, tour, weeks=52):
     else:
         pass
         
-    return X_encoder, X_decoder, y_decoder
+    return X_encoder.tail(maxlen), X_decoder, y_decoder, season_data.tail(maxlen).race_ref.unique()
 
 
 def get_scaler(maxlen, df, riders):
@@ -52,7 +52,7 @@ def get_scaler(maxlen, df, riders):
         if year != 2000:
             
             #X_encoder, X_decoder, y_decoder, y_encoder = get_sequence(df, rider, year, tour)
-            X_encoder, X_decoder, y = get_sequence(df, rider, year, tour)
+            X_encoder, X_decoder, y = get_sequence(df, rider, year, tour, maxlen)
             
             X_encoder_ls.append(X_encoder)
             X_decoder_ls.append(X_decoder)

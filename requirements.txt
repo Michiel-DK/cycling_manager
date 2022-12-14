@@ -15,7 +15,7 @@ colored==1.4.4
 comm==0.1.2
 contourpy==1.0.6
 cycler==0.11.0
--e git+ssh://git@github.com/Michiel-DK/cycling_manager.git@554d7b639de5ced78c397ef1f2ef266a0748e4f9#egg=cycling_manager
+-e git+ssh://git@github.com/Michiel-DK/cycling_manager.git@16b922aceabe87a9bc59f999b133991a5968a8b5#egg=cycling_manager
 databricks-cli==0.17.4
 debugpy==1.6.4
 decorator==5.1.1
@@ -57,6 +57,7 @@ mlflow==1.29.0
 nest-asyncio==1.5.6
 numpy==1.23.5
 oauthlib==3.2.2
+opencv-python==4.6.0.66
 opt-einsum==3.3.0
 packaging==21.3
 pandas==1.5.2
