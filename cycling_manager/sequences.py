@@ -7,7 +7,7 @@ from keras_preprocessing.sequence import pad_sequences
 
 
 
-def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80):
+def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80, img=False):
     
     #get tour data
     if year != 2000:
@@ -36,9 +36,9 @@ def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80):
     
     else:
         pass
-        
-    return X_encoder.tail(maxlen), X_decoder, y_decoder, season_data.tail(maxlen).race_ref.unique()
-
+    if img:
+        return y_decoder, tour_data.race_ref.unique(), season_data.tail(maxlen).race_ref.unique()
+    return X_encoder.tail(maxlen), X_decoder, y_decoder
 
 def get_scaler(maxlen, df, riders):
     

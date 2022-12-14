@@ -30,7 +30,7 @@ def get_seq(
     
     """get scaler based on given df and maxlength of sequences"""
     
-    X_enc_ss, X_dec_ss = get_scaler(80, df, values)
+    X_enc_ss, X_dec_ss = get_scaler(maxlen, df, values)
     
     print(Fore.GREEN + f"\Scaler done..." + Style.RESET_ALL)
     
@@ -81,7 +81,7 @@ def train(start:int = 2017,
     
 
 if __name__=='__main__':
-    train(start=2005, end=2022, maxlen=80)
+    train(start=2017, end=2022, maxlen=80)
     
     
     
