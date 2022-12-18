@@ -15,6 +15,7 @@ from tensorflow.keras.callbacks import EarlyStopping
 from tensorflow.keras.metrics import MAE, MSE, RootMeanSquaredError, Recall, Precision, Accuracy, CategoricalAccuracy
 from keras_preprocessing.sequence import pad_sequences
 from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.optimizers.schedules import ExponentialDecay
 
 # define the encoder and decoder -> clean
 def encoder(encoder_features):
@@ -35,7 +36,7 @@ def decoder(decoder_features, encoder_outputs):
     x = TimeDistributed(Dense(units=32, activation='relu'))(x)
     x = TimeDistributed(Dense(units=16, activation='relu'))(x)
     x = TimeDistributed(Dense(units=6, activation='relu'))(x)
-    y = TimeDistributed(Dense(units=1, activation='sigmoid'))(x)
+    y = TimeDistributed(Dense(units=1, activation='linear'))(x)
     return y
 
 def combine_model(X_encoder, X_decoder):
@@ -52,7 +53,13 @@ def combine_model(X_encoder, X_decoder):
 
 def compile_model(model):
     
-    model.compile(optimizer='rmsprop', loss='hinge', metrics=[Precision()])
+    initial_learning_rate = 0.01
+
+    lr_schedule = ExponentialDecay(initial_learning_rate, decay_steps=1000, decay_rate=0.5)
+
+    adam = Adam(learning_rate=lr_schedule)
+    
+    model.compile(optimizer='rmsprop', loss='mean_absolute_error', metrics='mean_absolute_error')
     
     print(Fore.YELLOW + f"\Compile model..." + Style.RESET_ALL)
 
@@ -86,3 +93,33 @@ def train_model(model: Model,
 
 
     return model, history
+
+def evaluate_model(model: Model,
+                   X_encoder: np.ndarray,
+                   X_decoder: np.ndarray,
+                   y_decoder: np.ndarray,
+                   batch_size=128) -> Tuple[Model, dict]:
+    """
+    Evaluate trained model performance on dataset
+    """
+
+    print(Fore.BLUE + f"\nEvaluate model {len(X_encoder.shape)}" + Style.RESET_ALL)
+
+    if model is None:
+        print(f"\n❌ no model to evaluate")
+        return None
+
+    metrics = model.evaluate(
+        x=[X_encoder, X_decoder],
+        y=y_decoder,
+        batch_size=batch_size,
+        verbose=1,
+        # callbacks=None,
+        return_dict=True)
+    
+    loss = metrics["loss"]
+    mae = metrics["mean_absolute_error"]
+
+    print(f"\n✅ model evaluated: loss {round(loss, 2)} mae {round(mae, 2)}")
+
+    return metrics

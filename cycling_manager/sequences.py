@@ -5,14 +5,17 @@ import numpy as np
 
 from keras_preprocessing.sequence import pad_sequences
 
+from colorama import Fore, Style
 
 
-def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80, img=False):
+def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80, img=False, binary=False):
     
     #get tour data
     if year != 2000:
         tour_data = df[(df['name'] == name) & (df['year'] == year) & (df['race_name'] == tour)].sort_values(by='date')
-        y_decoder = tour_data[['date', 'result_bin']].set_index('date')
+        if binary == False:
+            y_decoder = tour_data[['date', 'result_bin']].set_index('date')
+        y_decoder = tour_data[['date', 'result']].set_index('date')
         X_decoder = tour_data[['date', 'distance', 'ProfileScore:', 'Vert. meters:', 'Startlist quality score:', 'parcours_type_num']].set_index('date')
         
         season_data = df[(df['name'] == name) & (df['date'] < min(tour_data['date'])) & (df['date'] >= min(tour_data['date']) - datetime.timedelta(weeks=maxlen))].sort_values(by='date')
@@ -28,7 +31,7 @@ def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80, img=False):
         #import ipdb; ipdb.set_trace()
         if X_encoder.isna().sum().sum() > 0:
             X_encoder.dropna(inplace=True)
-            print(name, year, tour)
+            print(Fore.RED + f"\n dropped nan for {name, year, tour}" + Style.RESET_ALL)
     
         else:
             pass
@@ -88,7 +91,7 @@ def get_sequences(maxlen, df, riders, enc_scaler, dec_scaler):
         
         if year != 2000:
             
-                print(rider, year, tour)
+                print(Fore.GREEN + f"\n Getting sequence for {rider, year, tour}" + Style.RESET_ALL)
             
             #try:
             
@@ -96,7 +99,7 @@ def get_sequences(maxlen, df, riders, enc_scaler, dec_scaler):
                 #X_encoder, X_decoder, y_decoder, y_encoder = get_sequence(df, rider, year, tour)
                 
                 if X_encoder.shape == (0,15):
-                    print(rider, year, tour, X_encoder.shape)
+                    print(Fore.RED + f"\n X_encoder empty for {rider, year, tour}" + Style.RESET_ALL)
                 
                 else:
                     X_encoder = enc_scaler.transform(X_encoder)

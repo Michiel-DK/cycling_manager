@@ -11,7 +11,7 @@ from cycling_manager.registry import *
 def preproc(
         start : int,
         end : int
-    ) -> pd.DataFrame:
+    ) -> Tuple:
     
     """ full preprocess data + split """
     
@@ -40,14 +40,13 @@ def get_seq(
     
     return X_encoder, X_decoder, y_decoder
 
-def train(start:int = 2017,
+def train(df:pd.DataFrame,
+          train:pd.DataFrame,
+          start:int = 2017,
           end: int = 2022, 
           maxlen: int = 80) -> None:
     
     """train model and save locally"""
-    
-    #get train test data
-    df, train, test = preproc(start, end)
     
     #get train sequences
     X_encoder_train, X_decoder_train, y_decoder_train = get_seq(train, df, maxlen)
@@ -62,7 +61,7 @@ def train(start:int = 2017,
     
     model, history = train_model(model, X_encoder_train, X_decoder_train, y_decoder_train,\
         batch_size=128, patience=5, validation_split=0.2, validation_data=None)
-    
+        
     metrics = np.min(history.history)
     
     params = dict(
@@ -72,18 +71,58 @@ def train(start:int = 2017,
         maxlen=maxlen)
     
     metrics = dict(
-        accuracy='precision'
+        mse=metrics
     )
     
     save_model(model, params=params, metrics=metrics)
     
     return None
+
+def evaluate(
+    df : pd.DataFrame,
+    test : pd.DataFrame,
+    maxlen: int
+):
+    
+    model = load_model()
+    
+    X_encoder_test, X_decoder_test, y_decoder_test = get_seq(test, df, maxlen)
+
+    metrics_dict = evaluate_model(model, X_encoder_test, X_decoder_test, y_decoder_test)
+    mae = metrics_dict["mean_absolute_error"]
+
+    # Save evaluation
+    params = dict(
+        model_version=get_model_version(),
+
+        # Package behavior
+        context="evaluate",
+
+        # Data source
+
+        row_count=len(X_encoder_test)
+    )
+
+    save_model(params=params, metrics=dict(mae=mae))
+
+    return mae
     
 
 if __name__=='__main__':
-    train(start=2017, end=2022, maxlen=80)
-    
-    
+        #get train test data
+        try:
+            start = 2010
+            end = 2021
+            df, train_df, test_df = preproc(start, end)
+            #train(df, train_df, start, end, maxlen=80)
+            mae = evaluate(df, test_df, 80)
+            print(mae)
+        except:
+            import ipdb, traceback, sys
+            extype, value, tb = sys.exc_info()
+            traceback.print_exc()
+            ipdb.post_mortem(tb)
+        
     
     
     

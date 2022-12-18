@@ -13,6 +13,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
+#comment to disable warnings
+pd.options.mode.chained_assignment = None
+
 def get_data(local=True) -> pd.DataFrame:
     
     """
@@ -98,7 +101,6 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
         
         #drop where either profile score or vert meters are missing
         no_na = merged.dropna(subset=['ProfileScore:', 'Vert. meters:'], how='any')
-        print(no_na.shape)
 
         #drop where score below 10 -> arbitrary point
         no_na = no_na[no_na['ProfileScore:'] > 10]
@@ -125,7 +127,7 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
         
         profile_na = merged[merged['ProfileScore:'].isna()]
         smaller_ten = merged[merged['ProfileScore:'] <= 10]
-        impute_profile = profile_na.append(smaller_ten)
+        impute_profile = pd.concat([profile_na, smaller_ten])
         impute_profile.dropna(subset=['Distance:', 'Vert. meters:'], how='any', inplace=True)
 
         X_pred = impute_profile[['Distance:', 'Vert. meters:']]
@@ -277,15 +279,15 @@ def split(df:pd.DataFrame,
     split df into train and test
     """
     
-    df_predict = df[df['year'] == end]
-    df_train = df[(df['year'] > start) & (df['year'] != end)]
+    df_predict = df[df['year'] >= end]
+    df_train = df[(df['year'] >= start) & (df['year'] < end)]
     
     #riders to predict
     riders_predict = df_predict[(df_predict['race_name']=='tour-de-france')| (df_predict['race_name']=='vuelta-a-espana')| (df_predict['race_name']=='giro-d-italia')][['name', 'year', 'race_name']]
     riders_predict = riders_predict[riders_predict['year'] == end].drop_duplicates().reset_index(drop=True)
     
     riders = df_train[(df_train['race_name']=='tour-de-france')| (df_train['race_name']=='vuelta-a-espana')| (df_train['race_name']=='giro-d-italia')][['name', 'year', 'race_name']]
-    riders = riders[riders['year'] != 2022].drop_duplicates().reset_index(drop=True).sort_values(by='year', ascending=False)
+    riders = riders[riders['year'] != end].drop_duplicates().reset_index(drop=True).sort_values(by='year', ascending=False)
     
     return riders, riders_predict
 
