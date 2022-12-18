@@ -8,7 +8,7 @@ from colorama import Fore, Style
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 
-from tensorflow.keras.layers import Input, Dense, LSTM, TimeDistributed, Concatenate, Add, Masking, GRU, RepeatVector, Dot, Bidirectional
+from tensorflow.keras.layers import Input, Dense, LSTM, TimeDistributed, Concatenate, Add, Masking, GRU, RepeatVector, Dot, Bidirectional, LayerNormalization
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import RMSprop, Adam
 from tensorflow.keras.callbacks import EarlyStopping
@@ -21,11 +21,13 @@ from tensorflow.keras.optimizers.schedules import ExponentialDecay
 def encoder(encoder_features):
     y = Masking(mask_value = -1000.)(encoder_features)
     #each LSTM unit returning a sequence of 6 outputs, one for each time step in the input data
-    y = LSTM(units=28, return_sequences=True, activation='tanh')(y)
-    y = LSTM(units=14, return_sequences=True, activation='tanh')(y)
+    y = LSTM(units=15, dropout=0.2, return_sequences=True, activation='tanh')(y)
+    y = LayerNormalization()(y)
+    y = LSTM(units=30, dropout=0.2, return_sequences=True, activation='tanh')(y)
+    y = LayerNormalization()(y)
     #output one time step from the sequence for each time step in the input but process 5 outputs of the input sequence at a time
     #y = TimeDistributed(Dense(units=5, activation='tanh'))(y)
-    y = LSTM(units=14, return_sequences=False, activation='tanh')(y)
+    y = LSTM(units=14, dropout=0.2, return_sequences=False, activation='tanh')(y)
     y = RepeatVector(21)(y)
     return y
 
@@ -59,7 +61,7 @@ def compile_model(model):
 
     adam = Adam(learning_rate=lr_schedule)
     
-    model.compile(optimizer='rmsprop', loss='mean_absolute_error', metrics='mean_absolute_error')
+    model.compile(optimizer=adam, loss='mean_absolute_error', metrics='mean_absolute_error')
     
     print(Fore.YELLOW + f"\Compile model..." + Style.RESET_ALL)
 

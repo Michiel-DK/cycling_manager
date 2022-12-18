@@ -6,6 +6,9 @@ import pickle
 import mlflow
 from mlflow.tracking import MlflowClient
 
+from mlflow.tracking import MlflowClient
+from mlflow.exceptions import MlflowException
+
 from colorama import Fore, Style
 
 from tensorflow.keras import Model, models
@@ -23,8 +26,14 @@ def save_model(model: Model = None,
 
         # retrieve mlflow env params
         # $CHA_BEGIN
-        mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
         mlflow_experiment = os.environ.get("MLFLOW_EXPERIMENT")
+        try:
+            mlflow.create_experiment(mlflow_experiment, artifact_location="s3://mlflow")
+        except MlflowException as e:
+            print(e)
+        mlflow.set_experiment(mlflow_experiment)
+        mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
+        
         mlflow_model_name = os.environ.get("MLFLOW_MODEL_NAME")
         # $CHA_END
 

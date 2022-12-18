@@ -62,7 +62,7 @@ def train(df:pd.DataFrame,
     model, history = train_model(model, X_encoder_train, X_decoder_train, y_decoder_train,\
         batch_size=128, patience=5, validation_split=0.2, validation_data=None)
         
-    metrics = np.min(history.history)
+    metrics = np.min(history.history['val_mean_absolute_error'])
     
     params = dict(
         # Model parameters
@@ -71,7 +71,7 @@ def train(df:pd.DataFrame,
         maxlen=maxlen)
     
     metrics = dict(
-        mse=metrics
+        val_mae=metrics
     )
     
     save_model(model, params=params, metrics=metrics)
@@ -113,9 +113,10 @@ if __name__=='__main__':
         try:
             start = 2010
             end = 2021
+            maxlen=40
             df, train_df, test_df = preproc(start, end)
-            #train(df, train_df, start, end, maxlen=80)
-            mae = evaluate(df, test_df, 80)
+            train(df, train_df, start, end, maxlen=maxlen)
+            mae = evaluate(df, test_df, maxlen)
             print(mae)
         except:
             import ipdb, traceback, sys
