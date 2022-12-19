@@ -111,7 +111,7 @@ def evaluate(
 if __name__=='__main__':
         #get train test data
         try:
-            start = 2010
+            start = 2019
             end = 2021
             maxlen=40
             df, train_df, test_df = preproc(start, end)

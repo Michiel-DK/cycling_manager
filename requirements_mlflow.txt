@@ -1,0 +1,5 @@
+mlflow==1.23.0
+psycopg2-binary==2.9.5
+boto3==1.26.32
+protobuf==3.20.0
+numpy==1.23.5

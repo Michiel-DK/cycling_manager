@@ -1,0 +1,14 @@
+FROM python:3.10.6-slim-buster
+
+COPY requirements_mlflow.txt /requirements_mlflow.txt
+RUN pip install --no-cache-dir -r requirements_mlflow.txt && \
+  rm requirements_mlflow.txt
+
+EXPOSE 5001
+
+ENV MLFLOW_TRACKING_URI postgresql+psycopg2://postgres:postgres@localhost/mlflow_db
+ENV ARTIFACT_LOCATION s3://mlflow
+ENV MLFLOW_HOST '0.0.0.0'
+ENV MLFLOW_PORT 5001
+
+CMD mlflow server --backend-store-uri ${BACKEND_URI} --default-artifact-root ${ARTIFACT_LOCATION} --host ${MLFLOW_HOST} --port ${MLFLOW_PORT}
