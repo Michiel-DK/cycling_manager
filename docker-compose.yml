@@ -30,6 +30,8 @@ services:
       MINIO_ROOT_USER: $AWS_ACCESS_KEY_ID
       MINIO_ROOT_PASSWORD: $AWS_SECRET_ACCESS_KEY
     command: server --console-address ":9001" /data
+    depends_on:
+      - mlflow_db
 
   mlflow_server:
     image: 'atcommons/mlflow-server'
@@ -46,6 +48,12 @@ services:
     environment:
       BACKEND_URI: $MLFLOW_TRACKING_URI
       ARTIFACT_LOCATION: $ARTIFACT_LOCATION
+    depends_on:
+      - mlflow_db
+    links:
+      - mlflow_db:mlflow_db
+
+
 
 volumes:
   postgres_data:

@@ -6,8 +6,8 @@ RUN pip install --no-cache-dir -r requirements_mlflow.txt && \
 
 EXPOSE 5001
 
-ENV MLFLOW_TRACKING_URI postgresql+psycopg2://postgres:postgres@localhost/mlflow_db
-ENV ARTIFACT_LOCATION s3://mlflow
+ENV MLFLOW_TRACKING_URI postgresql+psycopg2://postgres:postgres@mlflow_db/mlflow_db
+ENV ARTIFACT_LOCATION s3://mlflow/
 ENV MLFLOW_HOST '0.0.0.0'
 ENV MLFLOW_PORT 5001
 

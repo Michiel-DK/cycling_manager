@@ -26,21 +26,18 @@ def save_model(model: Model = None,
 
         # retrieve mlflow env params
         # $CHA_BEGIN
+        mlflow_tracking_uri = 'postgresql+psycopg2://postgres:postgres@localhost/mlflow_db'
+        mlflow.set_tracking_uri(mlflow_tracking_uri)
         mlflow_experiment = os.environ.get("MLFLOW_EXPERIMENT")
         try:
             mlflow.create_experiment(mlflow_experiment, artifact_location="s3://mlflow")
         except MlflowException as e:
             print(e)
         mlflow.set_experiment(mlflow_experiment)
-        mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
+        #mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
+        
         
         mlflow_model_name = os.environ.get("MLFLOW_MODEL_NAME")
-        # $CHA_END
-
-        # configure mlflow
-        # $CHA_BEGIN
-        mlflow.set_tracking_uri(mlflow_tracking_uri)
-        mlflow.set_experiment(experiment_name=mlflow_experiment)
         # $CHA_END
 
         with mlflow.start_run():
