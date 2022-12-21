@@ -46,7 +46,7 @@ services:
     env_file:
       - .env
     environment:
-      BACKEND_URI: $MLFLOW_TRACKING_URI
+      BACKEND_URI: $BACKEND_URI
       ARTIFACT_LOCATION: $ARTIFACT_LOCATION
     depends_on:
       - mlflow_db

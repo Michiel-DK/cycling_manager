@@ -3,6 +3,18 @@ import os
 import time
 import pickle
 
+        #mlflow_t
+import logging
+import os
+import time
+from pathlib import Path
+from tempfile import TemporaryDirectory
+
+import boto3
+import mlflow
+from mlflow.data import parse_s3_uri
+from mlflow.entities import Run
+
 import mlflow
 from mlflow.tracking import MlflowClient
 
@@ -12,6 +24,37 @@ from mlflow.exceptions import MlflowException
 from colorama import Fore, Style
 
 from tensorflow.keras import Model, models
+
+logger = logging.getLogger(__name__)
+
+from botocore.config import Config
+
+my_config = Config(
+    region_name = 'us-west-1',
+)
+
+def ensure_s3_bucket_for_run(run: Run):
+    """Create bucket if not exists.
+    :param run: MLFlow run
+    """
+    try:
+        bucket, __ = parse_s3_uri(run.info.artifact_uri)
+    except Exception:
+        pass
+    else:
+        s3_endpoint_url = os.environ.get("MLFLOW_S3_ENDPOINT_URL")
+        print(s3_endpoint_url)
+        if s3_endpoint_url:
+            s3_client = boto3.client("s3", endpoint_url=s3_endpoint_url, config=my_config)
+            try:
+                s3_client.create_bucket(Bucket=bucket)
+            except (
+                s3_client.exceptions.BucketAlreadyExists,
+                s3_client.exceptions.BucketAlreadyOwnedByYou,
+            ):
+                logger.info("Bucket already exists", bucket=bucket)
+                print("Bucket already exists")
+
 
 def save_model(model: Model = None,
                params: dict = None,
@@ -26,24 +69,32 @@ def save_model(model: Model = None,
 
         # retrieve mlflow env params
         # $CHA_BEGIN
-        mlflow_tracking_uri = 'postgresql+psycopg2://postgres:postgres@localhost/mlflow_db'
-        mlflow.set_tracking_uri(mlflow_tracking_uri)
-        mlflow_experiment = os.environ.get("MLFLOW_EXPERIMENT")
-        try:
-            mlflow.create_experiment(mlflow_experiment, artifact_location="s3://mlflow")
-        except MlflowException as e:
-            print(e)
-        mlflow.set_experiment(mlflow_experiment)
+        #mlflow_tracking_uri = 'postgresql+psycopg2://postgres:postgres@localhost/mlflow_db'
+        if not mlflow.get_experiment_by_name(os.environ.get("MLFLOW_EXPERIMENT")):
+            mlflow.create_experiment(os.environ.get("MLFLOW_EXPERIMENT"), artifact_location=os.environ.get("ARTIFACT_LOCATION"))
+        mlflow.set_tracking_uri( os.environ.get("MLFLOW_TRACKING_URI"))
+
+        #mlflow_experiment = os.environ.get("MLFLOW_EXPERIMENT")
+        # try:
+        #     mlflow.create_experiment(mlflow_experiment, artifact_location="s3://mlflow")
+        # except MlflowException as e:
+        #     print(e)
+        mlflow.set_experiment(os.environ.get("MLFLOW_EXPERIMENT"))
         #mlflow_tracking_uri = os.environ.get("MLFLOW_TRACKING_URI")
         
         
         mlflow_model_name = os.environ.get("MLFLOW_MODEL_NAME")
         # $CHA_END
 
-        with mlflow.start_run():
+        with mlflow.start_run() as run:
 
             # STEP 1: push parameters to mlflow
             # $CHA_BEGIN
+            #ensure_s3_bucket_for_run(run)
+            
+            
+            
+            
             if params is not None:
                 mlflow.log_params(params)
             # $CHA_END
@@ -101,23 +152,24 @@ def load_model(save_copy_locally=False) -> Model:
     load the latest saved model, return None if no model found
     """
     if os.environ.get("MODEL_TARGET") == "mlflow":
-        stage = "Production"
 
-        print(Fore.BLUE + f"\nLoad model {stage} stage from mlflow..." + Style.RESET_ALL)
+        print(Fore.BLUE + f"\nLoad model stage from mlflow..." + Style.RESET_ALL)
 
         # load model from mlflow
         mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
 
         mlflow_model_name = os.environ.get("MLFLOW_MODEL_NAME")
 
-        model_uri = f"models:/{mlflow_model_name}/{stage}"
+        
+        #model_uri = f"models:/{mlflow_model_name}/{stage}"
+        model_uri = f'{os.environ.get("ARTIFACT_LOCATION")}//artifacts/model'
         print(f"- uri: {model_uri}")
 
         try:
-            model = mlflow.keras.load_model(model_uri=model_uri)
+            model = mlflow.keras.load_model(model_uri)
             print("\n✅ model loaded from mlflow")
         except:
-            print(f"\n❌ no model in stage {stage} on mlflow")
+            print(f"\n❌ no model in stage on mlflow")
             return None
 
         if save_copy_locally:

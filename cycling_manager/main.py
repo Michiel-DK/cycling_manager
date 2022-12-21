@@ -44,7 +44,8 @@ def train(df:pd.DataFrame,
           train:pd.DataFrame,
           start:int = 2017,
           end: int = 2022, 
-          maxlen: int = 80) -> None:
+          maxlen: int = 80,
+          batch_size: int = 128) -> None:
     
     """train model and save locally"""
     
@@ -60,7 +61,7 @@ def train(df:pd.DataFrame,
     model = compile_model(model)
     
     model, history = train_model(model, X_encoder_train, X_decoder_train, y_decoder_train,\
-        batch_size=128, patience=5, validation_split=0.2, validation_data=None)
+        batch_size=batch_size, patience=5, validation_split=0.2, validation_data=None)
         
     metrics = np.min(history.history['val_mean_absolute_error'])
     
@@ -68,7 +69,10 @@ def train(df:pd.DataFrame,
         # Model parameters
         start=start,
         end=end,
-        maxlen=maxlen)
+        maxlen=maxlen,
+        encoder_shape=X_encoder_train.shape,
+        decoder_shape=X_decoder_train.shape,
+        batch_size=batch_size)
     
     metrics = dict(
         val_mae=metrics
@@ -111,7 +115,7 @@ def evaluate(
 if __name__=='__main__':
         #get train test data
         try:
-            start = 2019
+            start = 2020
             end = 2021
             maxlen=40
             df, train_df, test_df = preproc(start, end)
