@@ -8,7 +8,7 @@ from colorama import Fore, Style
 from sklearn.preprocessing import StandardScaler, MinMaxScaler
 from sklearn.model_selection import train_test_split
 
-from tensorflow.keras.layers import Input, Dense, LSTM, TimeDistributed, Concatenate, Add, Masking, GRU, RepeatVector, Dot, Bidirectional, LayerNormalization
+from tensorflow.keras.layers import Input, Dense, LSTM, TimeDistributed, Concatenate, Add, Masking, GRU, RepeatVector, Dot, Bidirectional, LayerNormalization, Normalization
 from tensorflow.keras.models import Model
 from tensorflow.keras.optimizers import RMSprop, Adam
 from tensorflow.keras.callbacks import EarlyStopping
@@ -18,7 +18,7 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras.optimizers.schedules import ExponentialDecay
 
 # define the encoder and decoder -> clean
-def encoder(encoder_features):
+def encoder(encoder_features):    
     y = Masking(mask_value = -1000.)(encoder_features)
     #each LSTM unit returning a sequence of 6 outputs, one for each time step in the input data
     y = LSTM(units=15, dropout=0.2, return_sequences=True, activation='tanh')(y)

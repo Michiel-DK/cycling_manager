@@ -91,10 +91,7 @@ def save_model(model: Model = None,
             # STEP 1: push parameters to mlflow
             # $CHA_BEGIN
             #ensure_s3_bucket_for_run(run)
-            
-            
-            
-            
+
             if params is not None:
                 mlflow.log_params(params)
             # $CHA_END
@@ -162,11 +159,14 @@ def load_model(save_copy_locally=False) -> Model:
 
         
         #model_uri = f"models:/{mlflow_model_name}/{stage}"
+        logged_model = 'runs:/25863ed7b656456f88cdf9cfa29d3371/model'
+        
         model_uri = f'{os.environ.get("ARTIFACT_LOCATION")}//artifacts/model'
+        
         print(f"- uri: {model_uri}")
 
         try:
-            model = mlflow.keras.load_model(model_uri)
+            model = mlflow.keras.load_model(logged_model)
             print("\n✅ model loaded from mlflow")
         except:
             print(f"\n❌ no model in stage on mlflow")

@@ -19,6 +19,8 @@ def preproc(
     
     train, test = split(df, start=start, end=end)
     
+    #df = preprocess_features(df)
+    
     print(Fore.BLUE + f"\nProcessing done..." + Style.RESET_ALL)
     
     return df, train, test

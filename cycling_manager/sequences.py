@@ -28,10 +28,10 @@ def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80, img=False, bina
                 X_encoder[i] = 0.0
                 
         X_encoder = X_encoder[['fl', 'mo_fl', 'hi_fl', 'hi_hi', 'mo_mo', 'distance','result', 'ProfileScore:','Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']]
-        #import ipdb; ipdb.set_trace()
+        
         if X_encoder.isna().sum().sum() > 0:
             X_encoder.dropna(inplace=True)
-            print(Fore.RED + f"\n dropped nan for {name, year, tour}" + Style.RESET_ALL)
+            print(Fore.RED + f"\n dropped nan for {name, year, tour, X_encoder.shape}" + Style.RESET_ALL)
     
         else:
             pass

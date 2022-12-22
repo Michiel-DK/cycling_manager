@@ -9,10 +9,13 @@ from typing import Tuple
 
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import StandardScaler, OneHotEncoder, FunctionTransformer
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
+from sklearn.pipeline import make_pipeline
+from sklearn.compose import ColumnTransformer, make_column_transformer
 
+from colorama import Fore, Style
 #comment to disable warnings
 pd.options.mode.chained_assignment = None
 
@@ -270,6 +273,74 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
     merged = general_preprocess(merged)
     
     return merged
+
+def preprocess_features(df : pd.DataFrame) -> pd.DataFrame:
+
+    def create_sklearn_preprocessor() -> ColumnTransformer:
+        """
+        Create a scikit-learn preprocessor
+        """
+
+        # DISTANCE PIPE
+        distance_min = 0.6
+        distance_max = 305
+        distance_transformer = FunctionTransformer(lambda p: (p - distance_min) /
+            (distance_max - distance_min))
+
+        # RESULT PIPE
+        result_min = 1
+        result_max = 1011
+        result_transformer = FunctionTransformer(lambda p: (p - result_min) /
+            (result_max - result_min))
+
+        # PROFILE PIPE
+        profile_min = 11
+        profile_max = 538
+        profile_transformer = FunctionTransformer(lambda p: (p - profile_min) /
+            (profile_max - profile_min))
+
+        # VERT PIPE
+        vert_min = 0
+        vert_max = 6104
+        vert_transformer = FunctionTransformer(lambda p: (p - vert_min) /
+            (vert_max - vert_min))
+
+        # STARTLIST PIPE
+        startlist_min = 0
+        startlist_max = 1812
+        startlist_transformer = FunctionTransformer(lambda p: (p - startlist_min) /
+            (startlist_max - startlist_min))
+
+        # STARTLIST PIPE
+        speed_min = 0
+        speed_max = 82
+        speed_transformer = FunctionTransformer(lambda p: (p - speed_min) /
+            (speed_max - speed_min))
+        
+        # COMBINED PREPROCESSOR
+        final_preprocessor = ColumnTransformer(
+                    [
+                        ("distance_transformer", distance_transformer, ["distance"]),
+                        ("result_transformer", result_transformer, ["result"]),
+                        ("profile_transformer", profile_transformer, ["ProfileScore:"]),
+                        ("vert_transformer", vert_transformer, ["Vert. meters:"]),
+                        ("startlist_transformer", startlist_transformer, ["Startlist quality score:"]),
+                        ("speed_transformer", speed_transformer, ["Avg. speed winner:"]),
+                    ], remainder="drop",
+                    n_jobs=-1,
+                )
+
+        return final_preprocessor
+    
+    df_small = df[['distance','result', 'ProfileScore:','Vert. meters:', 'Startlist quality score:','Avg. speed winner:']]
+    df_big = df.drop(columns=['distance', 'ProfileScore:','Vert. meters:', 'Startlist quality score:','Avg. speed winner:'])
+    
+    print(Fore.BLUE + "\nPreprocess features..." + Style.RESET_ALL)
+    final_preprocessor = create_sklearn_preprocessor()
+    
+    scaled_df=pd.DataFrame(final_preprocessor.fit_transform(df_small), columns=df_small.columns).rename(columns={'result':'result_scaled'})
+    
+    return scaled_df.merge(df_big, left_index=True, right_index=True)
 
 def split(df:pd.DataFrame, 
           start: int = 2017,
