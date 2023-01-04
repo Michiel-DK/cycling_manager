@@ -8,7 +8,7 @@ from keras_preprocessing.sequence import pad_sequences
 from colorama import Fore, Style
 
 
-def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=80, img=False, binary=False):
+def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=40, img=False, binary=False):
     
     #get tour data
     if year != 2000:

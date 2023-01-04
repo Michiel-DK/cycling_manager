@@ -159,14 +159,16 @@ def load_model(save_copy_locally=False) -> Model:
         mlflow.set_tracking_uri(os.environ.get("MLFLOW_TRACKING_URI"))
 
         mlflow_model_name = os.environ.get("MLFLOW_MODEL_NAME")
-
+        
+                #model_uri = f"models:/{mlflow_model_name}/{stage}"
+        logged_model = 'runs:/26297aae497143b7a75464a52ad3a4da/model'
         
         #model_uri = f"models:/{mlflow_model_name}/{stage}"
         model_uri = f'{os.environ.get("ARTIFACT_LOCATION")}//artifacts/model'
         print(f"- uri: {model_uri}")
 
         try:
-            model = mlflow.keras.load_model(model_uri)
+            model = mlflow.keras.load_model(logged_model)
             print("\n✅ model loaded from mlflow")
         except:
             print(f"\n❌ no model in stage on mlflow")
