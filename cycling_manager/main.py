@@ -115,11 +115,11 @@ def evaluate(
 if __name__=='__main__':
         #get train test data
         try:
-            start = 2017
-            end = 2020
+            start = 2019
+            end = 2021
             maxlen=40
             df, train_df, test_df = preproc(start, end)
-            #train(df, train_df, start, end, maxlen=maxlen)
+            train(df, train_df, start, end, maxlen=maxlen)
             mae = evaluate(df, test_df, maxlen)
             print(mae)
         except:
