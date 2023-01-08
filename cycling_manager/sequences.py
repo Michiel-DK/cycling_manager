@@ -40,7 +40,7 @@ def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=40, img=False, bina
     else:
         pass
     if img:
-        return y_decoder.tail(maxlen), tour_data.race_ref.unique(), season_data[['race_ref', 'result']].tail(maxlen), season_data.tail(maxlen).race_ref.unique()
+        return y_decoder, tour_data.race_ref.unique(), season_data[['race_ref', 'result']].tail(maxlen), season_data.tail(maxlen).race_ref.unique()
     return X_encoder.tail(maxlen), X_decoder, y_decoder
 
 def get_scaler(maxlen, df, riders):
