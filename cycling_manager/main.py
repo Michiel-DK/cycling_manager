@@ -26,7 +26,8 @@ def preproc(
 def get_seq(
         values : pd.DataFrame, 
         df : pd.DataFrame, 
-        maxlen : int) -> Tuple:
+        maxlen : int,
+        binary: bool) -> Tuple:
     
     """get scaler based on given df and maxlength of sequences"""
     
@@ -34,7 +35,7 @@ def get_seq(
     
     print(Fore.GREEN + f"\Scaler done..." + Style.RESET_ALL)
     
-    X_encoder, X_decoder, y_decoder = get_sequences(maxlen, df, values, X_enc_ss, X_dec_ss)
+    X_encoder, X_decoder, y_decoder = get_sequences(maxlen, df, values, X_enc_ss, X_dec_ss, binary=binary)
     
     print(Fore.GREEN + f"\nSequencing done..." + Style.RESET_ALL)
     

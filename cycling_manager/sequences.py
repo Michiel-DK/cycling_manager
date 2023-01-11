@@ -13,12 +13,14 @@ def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=40, img=False, bina
     #get tour data
     if year != 2000:
         tour_data = df[(df['name'] == name) & (df['year'] == year) & (df['race_name'] == tour)].sort_values(by='date')
-        if binary == False:
+        if binary == True:
             y_decoder = tour_data[['date', 'result_bin']].set_index('date')
-        y_decoder = tour_data[['date', 'result']].set_index('date')
+        else:
+            y_decoder = tour_data[['date', 'result']].set_index('date')
         X_decoder = tour_data[['date', 'distance', 'ProfileScore:', 'Vert. meters:', 'Startlist quality score:', 'parcours_type_num']].set_index('date')
         
         season_data = df[(df['name'] == name) & (df['date'] < min(tour_data['date'])) & (df['date'] >= min(tour_data['date']) - datetime.timedelta(weeks=102))].sort_values(by='date')
+        season_data = season_data[season_data['result']<=60]
         X_encoder = season_data[['date', 'adjusted_points','result','distance', 'ProfileScore:', 'Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']].set_index('date')
         performance = X_encoder.pivot_table('adjusted_points', 'date','parcours_type_num').shift(1).fillna(0).cumsum().reset_index()
         X_encoder = performance.merge(X_encoder, on='date').set_index('date').drop(columns='adjusted_points').rename(columns={1.0 : 'fl', 2.0:'hi_fl', 3.0: 'hi_hi', 4.0:'mo_fl', 5.0:'mo_mo'})
@@ -27,8 +29,8 @@ def get_sequence(df : pd.DataFrame, name, year, tour, maxlen=40, img=False, bina
             if i not in X_encoder.columns:
                 X_encoder[i] = 0.0
                 
-        X_encoder = X_encoder[['fl', 'mo_fl', 'hi_fl', 'hi_hi', 'mo_mo', 'distance','result', 'ProfileScore:','Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']]
-        #import ipdb; ipdb.set_trace()
+        #X_encoder = X_encoder[['fl', 'mo_fl', 'hi_fl', 'hi_hi', 'mo_mo', 'distance','result', 'ProfileScore:','Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']]
+        X_encoder = X_encoder[['distance','result','Vert. meters:', 'Startlist quality score:','icon_bin','Avg. speed winner:', 'gt_binary']]
         if X_encoder.isna().sum().sum() > 0:
             X_encoder.dropna(inplace=True)
             print(Fore.RED + f"\n dropped nan for {name, year, tour}" + Style.RESET_ALL)
@@ -77,7 +79,7 @@ def get_scaler(maxlen, df, riders):
             
     return X_enc_mm, X_dec_mm#, y_train_mm
 
-def get_sequences(maxlen, df, riders, enc_scaler, dec_scaler):
+def get_sequences(maxlen, df, riders, enc_scaler, dec_scaler, binary):
     
     X_encoder_ls = []
     X_decoder_ls = []
@@ -91,14 +93,15 @@ def get_sequences(maxlen, df, riders, enc_scaler, dec_scaler):
         
         if year != 2000:
             
-                print(Fore.GREEN + f"\n Getting sequence for {rider, year, tour}" + Style.RESET_ALL)
+        
             
             #try:
             
-                X_encoder, X_decoder, y_decoder = get_sequence(df, rider, year, tour)
+                X_encoder, X_decoder, y_decoder = get_sequence(df, rider, year, tour, maxlen, binary=binary)
+                print(X_encoder.shape)
                 #X_encoder, X_decoder, y_decoder, y_encoder = get_sequence(df, rider, year, tour)
                 
-                if X_encoder.shape == (0,15):
+                if X_encoder.shape == (0,7):
                     print(Fore.RED + f"\n X_encoder empty for {rider, year, tour}" + Style.RESET_ALL)
                 
                 else:
