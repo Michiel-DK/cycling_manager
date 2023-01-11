@@ -3,12 +3,15 @@ import pandas as pd
 from sklearn.preprocessing import MinMaxScaler
 import numpy as np
 
+import tensorflow as tf
+import cv2
+
 from keras_preprocessing.sequence import pad_sequences
 
 from colorama import Fore, Style
 
 
-def get_num_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen_img=20, img=False, binary=False, y_encoder = True, num_cap=9999, img_cap=20):
+def get_full_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen_img=20, img=False, binary=False, y_encoder = True, num_cap=9999, img_cap=20):
     
     """Function that returns full sequence for numerical and imgage model"""
     
@@ -73,8 +76,60 @@ def get_num_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen_
         else:
             return X_decoder_num, y_decoder, X_encoder_num, X_decoder_img_ls, X_encoder_img_ls
         
-        X_encoder = X_encoder[X_encoder['result']<=num_cap].drop(columns='result').tail(maxlen)
+
+def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls):
+    
+    """Function to fetch images and set in sequences"""
+
+    season_ls_img = []
+    season_y_img = []
+    to_drop_ls = []
+    base_path = '../raw_data/img_300/'
+    
+    for season, result in zip(X_encoder_img_ls, y_encoder_img_ls):
         
+        season = [base_path+"_".join(race.split('/')[1:])+'.jpg' for race in season]
+    
+        img_ls = []
+        result_ls = []
+    
+        for race in season:
+            img = cv2.imread(race)
+            try:
+                img = tf.convert_to_tensor(img)
+                img_ls.append(img)
+                result_ls.append(result)
+            except:
+                to_drop_ls.append('race/'+race.split('/')[-1].split('.')[0].replace('_', '/'))
+                pass
+        
+            season_ls_img.append(np.array(img_ls))
+            season_y_img.append(np.array(result_ls))
+    
+    season_ls_img = np.array(season_ls_img)
+    season_y_img = np.array(season_y_img)
+    to_drop_ls = list(dict.fromkeys(to_drop_ls))
+    
+    for season in X_decoder_img_ls:
+        season = [base_path+"_".join(race.split('/')[1:])+'.jpg' for race in season]
+    
+        img_ls = []
+        
+        for race in season:
+            img = cv2.imread(race)
+            try:
+                img = tf.convert_to_tensor(img)
+                img_ls.append(img)
+            except:
+                print(race)
+            
+        tour_ls_img.append(np.array(img_ls))
+        
+    tour_ls_img = np.array(tour_ls_img)
+    
+    return season_ls_img, tour_ls_img, season_y_img, to_drop_ls
+    
+            
 
         
 
