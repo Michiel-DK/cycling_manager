@@ -5,6 +5,7 @@ import datetime
 import colored
 from colored import stylize
 import os
+from typing import Tuple
 
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.tree import DecisionTreeRegressor
@@ -12,13 +13,21 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 
+#comment to disable warnings
+pd.options.mode.chained_assignment = None
+
 def get_data(local=True) -> pd.DataFrame:
+    
+    """
+    Function to return fully merged df
+    """
+    
     if local:
-        merged1 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean.csv', index_col=0)
-        merged2 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_2.csv', index_col=0)
-        merged3 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_tdf2022.csv', index_col=0)
-        merged4 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_10s.csv', index_col=0)
-        merged5 = pd.read_csv(f'{os.getenv("LOCAL_PATH")}/raw_data/merged_clean_vuelta2022.csv', index_col=0)
+        merged1 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean.csv', index_col=0)
+        merged2 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean_2.csv', index_col=0)
+        merged3 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean_tdf2022.csv', index_col=0)
+        merged4 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean_10s.csv', index_col=0)
+        merged5 = pd.read_csv(f'{os.getenv("LOCAL_DATA_PATH")}/raw_data/merged_clean_vuelta2022.csv', index_col=0)
         
         merged = pd.concat([merged1, merged2, merged3, merged4, merged5], ignore_index=True)
         
@@ -36,8 +45,16 @@ def get_data(local=True) -> pd.DataFrame:
 
 def preprocess(df:pd.DataFrame) -> pd.DataFrame:
     
+    """
+    Preprocess entire df
+    """
+    
     def vert_meters(df:pd.DataFrame) -> pd.DataFrame:
     #get data
+    
+        """
+        Standard scale + Decistion tree to impute vertical meters
+        """
         merged = df.copy()
         
         #preprocess vertical meters
@@ -76,11 +93,14 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
     
     def profile_score(df:pd.DataFrame) -> pd.DataFrame:
         
+        """
+        Standard scale + Decistion tree to impute profile score
+        """
+        
         merged = df.copy()
         
         #drop where either profile score or vert meters are missing
         no_na = merged.dropna(subset=['ProfileScore:', 'Vert. meters:'], how='any')
-        print(no_na.shape)
 
         #drop where score below 10 -> arbitrary point
         no_na = no_na[no_na['ProfileScore:'] > 10]
@@ -107,7 +127,7 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
         
         profile_na = merged[merged['ProfileScore:'].isna()]
         smaller_ten = merged[merged['ProfileScore:'] <= 10]
-        impute_profile = profile_na.append(smaller_ten)
+        impute_profile = pd.concat([profile_na, smaller_ten])
         impute_profile.dropna(subset=['Distance:', 'Vert. meters:'], how='any', inplace=True)
 
         X_pred = impute_profile[['Distance:', 'Vert. meters:']]
@@ -119,6 +139,10 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
         return impute_profile
     
     def parcours_type(df:pd.DataFrame) -> pd.DataFrame:
+        
+        """
+        Standard scale + Decistion tree to impute parcours type
+        """
         
         merged = df.copy()
         
@@ -162,6 +186,10 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
     
     def general_preprocess(df:pd.DataFrame) -> pd.DataFrame:
         
+            """
+            preprocess categorical + y_variable
+            """
+        
             merged = df.copy()
             
             #change parcours names
@@ -201,7 +229,8 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
                 elif x < 21:
                     return 1.
                 else:
-                    return 2
+                    return 0
+
                 
             merged['result_bin'] = merged['result'].apply(change_bin)
             merged = merged[merged['result_bin'] != -1000.]
@@ -242,10 +271,32 @@ def preprocess(df:pd.DataFrame) -> pd.DataFrame:
     
     return merged
 
+def split(df:pd.DataFrame, 
+          start: int = 2017,
+          end: int = 2022) -> Tuple:
+    
+    """
+    split df into train and test
+    """
+    
+    df_predict = df[df['year'] >= end]
+    df_train = df[(df['year'] >= start) & (df['year'] < end)]
+    
+    #riders to predict
+    riders_predict = df_predict[(df_predict['race_name']=='tour-de-france')| (df_predict['race_name']=='vuelta-a-espana')| (df_predict['race_name']=='giro-d-italia')][['name', 'year', 'race_name']]
+    riders_predict = riders_predict[riders_predict['year'] == end].drop_duplicates().reset_index(drop=True)
+    
+    riders = df_train[(df_train['race_name']=='tour-de-france')| (df_train['race_name']=='vuelta-a-espana')| (df_train['race_name']=='giro-d-italia')][['name', 'year', 'race_name']]
+    riders = riders[riders['year'] != end].drop_duplicates().reset_index(drop=True).sort_values(by='year', ascending=False)
+    
+    return riders, riders_predict
+
 
 if __name__ == '__main__':
     merged = get_data()
     
     preprocessed = preprocess(merged)
+    
+    split(preprocessed)
     
     print(preprocessed.columns)
