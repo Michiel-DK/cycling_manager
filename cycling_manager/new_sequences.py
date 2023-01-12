@@ -41,7 +41,7 @@ def get_num_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen_
             X_encoder_merged[i] = 0.0
         
     X_encoder = X_encoder_merged[['fl', 'mo_fl', 'hi_fl', 'hi_hi', 'mo_mo', 'distance','result', 'ProfileScore:','Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']]
-        
+    X_encoder.dropna(inplace=True)
         #split for typing
     X_encoder_num = X_encoder[X_encoder['result']<=num_cap].tail(maxlen_num)
     X_encoder_num_no_y = X_encoder_num.drop(columns='result')
@@ -50,39 +50,38 @@ def get_num_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen_
     if X_encoder.isna().sum().sum() > 0:
         print(Fore.RED + f"\n passed for {name, year, tour} due to nan" + Style.RESET_ALL)
         pass
-    
-    X_decoder_num = tf.convert_to_tensor(pad_sequences(X_decoder_num.to_numpy().T, maxlen=21, dtype='float', padding='post', value=-1000.).T)
-    y_decoder = tf.convert_to_tensor(pad_sequences(y_decoder.to_numpy().T, maxlen=21, dtype='float', padding='post', value=-1000.).T)
-    X_encoder_num = tf.convert_to_tensor(pad_sequences(X_encoder_num.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
-    X_encoder_num_no_y = tf.convert_to_tensor(pad_sequences(X_encoder_num_no_y.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
-    
-    y_encoder_num = tf.convert_to_tensor(pad_sequences(y_encoder_num.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
-    
-    #if no image needed
-    if img == False:
-        
-        if y_encoder:
-            return X_decoder_num, y_decoder, X_encoder_num_no_y, y_encoder_num
-            
-        else:
-            return X_decoder_num, y_decoder,X_encoder_num
-    
-    #if image needed
     else:
-        if y_encoder:
+        X_decoder_num = tf.convert_to_tensor(pad_sequences(X_decoder_num.to_numpy().T, maxlen=21, dtype='float', padding='post', value=-1000.).T)
+        y_decoder = tf.convert_to_tensor(pad_sequences(y_decoder.to_numpy().T, maxlen=21, dtype='float', padding='post', value=-1000.).T)
+        X_encoder_num = tf.convert_to_tensor(pad_sequences(X_encoder_num.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
+        X_encoder_num_no_y = tf.convert_to_tensor(pad_sequences(X_encoder_num_no_y.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
+        
+        y_encoder_num = tf.convert_to_tensor(pad_sequences(y_encoder_num.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
+        
+        #if no image needed
+        if img == False:
             
+            if y_encoder:
+                return X_decoder_num, y_decoder, X_encoder_num_no_y, y_encoder_num
+                
+            else:
+                return X_decoder_num, y_decoder,X_encoder_num
+        
+        #if image needed
+        else:
             X_decoder_img_ls = tour_data.race_ref
-            
+                
             X_encoder_img = X_encoder[X_encoder['result']<=img_cap].tail(maxlen_img)
             X_encoder_img_ls = list(pd.merge(X_encoder_img, season_data, on='date', how='inner').race_ref)
-            
+                
             y_encoder_img_ls = list(X_encoder_img.result)
             
-            
-            return X_decoder_num, y_decoder, X_encoder_num_no_y, y_encoder_num, X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls
-            
-        else:
-            return X_decoder_num, y_decoder, X_encoder_num, X_decoder_img_ls, X_encoder_img_ls
+            if y_encoder == True:
+                
+                return X_decoder_num, y_decoder, X_encoder_num_no_y, y_encoder_num, X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls
+                
+            else:
+                return X_decoder_num, y_decoder, X_encoder_num, X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls
         
 
 def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls):
