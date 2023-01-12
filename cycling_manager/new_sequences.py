@@ -13,7 +13,7 @@ from tensorflow.keras.applications import resnet50
 from colorama import Fore, Style
 
 
-def get_full_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen_img=20, img=False, binary=False, y_encoder = True, num_cap=9999, img_cap=20):
+def get_num_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen_img=20, img=False, binary=False, y_encoder = True, num_cap=9999, img_cap=20):
     
     """Function that returns full sequence for numerical and imgage model"""
     
@@ -37,8 +37,8 @@ def get_full_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen
     X_encoder_merged = performance.merge(X_encoder, on='date').set_index('date').drop(columns='adjusted_points').rename(columns={1.0 : 'fl', 2.0:'hi_fl', 3.0: 'hi_hi', 4.0:'mo_fl', 5.0:'mo_mo'})
             
     for i in ['fl', 'hi_fl', 'hi_hi', 'mo_fl', 'mo_mo']:
-        if i not in X_encoder.columns:
-            X_encoder[i] = 0.0
+        if i not in X_encoder_merged.columns:
+            X_encoder_merged[i] = 0.0
         
     X_encoder = X_encoder_merged[['fl', 'mo_fl', 'hi_fl', 'hi_hi', 'mo_mo', 'distance','result', 'ProfileScore:','Vert. meters:', 'Startlist quality score:', 'parcours_type_num', 'icon_bin','Avg. speed winner:', 'types_bin', 'gt_binary']]
         
@@ -68,7 +68,7 @@ def get_full_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen
             return X_decoder_num, y_decoder,X_encoder_num
     
     #if image needed
-    else: 
+    else:
         if y_encoder:
             
             X_decoder_img_ls = tour_data.race_ref
@@ -137,6 +137,55 @@ def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=Fals
     if resnet:
         X_encoder_img = resnet50.preprocess_input(X_encoder_img)
         X_decoder_img = resnet50.preprocess_input(X_decoder_img)
-    
+            
     return X_encoder_img, X_decoder_img, y_encoder_img, to_drop_ls
 
+
+
+def get_full_sequence(df, riders, maxlen_num=40, maxlen_img=20, img=True, binary=True, y_encoder = True, num_cap=9999, img_cap=20):
+    
+    X_decoder_num_ls = []
+    y_decoder_ls = []
+    X_encoder_num_no_y_ls = []
+    y_encoder_num_ls = []
+    
+    X_img_decoder_ls = []
+    X_img_encoder_ls = []
+    y_img_encoder_ls = []
+    
+    for rider, year, tour in riders.values:
+        X_decoder_num, y_decoder, X_encoder_num_no_y, y_encoder_num, X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls=\
+                get_num_sequence(df, rider, year, tour, maxlen_num = maxlen_num, maxlen_img=maxlen_img, img=img, binary=binary, y_encoder=y_encoder, num_cap=num_cap, img_cap=img_cap)
+                
+        if len(X_encoder_img_ls) == 0:
+            pass
+        
+        else:
+                                 
+            X_encoder_img, X_decoder_img, y_encoder_img, to_drop_ls = get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=False)
+            
+            X_decoder_num_ls.append(X_decoder_num)
+            y_decoder_ls.append(y_decoder)
+            
+            X_encoder_num_no_y_ls.append(X_encoder_num_no_y)
+            y_encoder_num_ls.append(y_encoder_num)
+            
+            X_img_decoder_ls.append(X_decoder_img)
+            X_img_encoder_ls.append(X_encoder_img)
+            y_img_encoder_ls.append(y_encoder_img)
+    
+    X_decoder_num_ls = tf.convert_to_tensor(X_decoder_num_ls)
+    y_decoder_ls = tf.convert_to_tensor(y_decoder_ls)
+    X_encoder_num_no_y_ls = tf.convert_to_tensor(X_encoder_num_no_y_ls)
+    y_encoder_num_ls = tf.convert_to_tensor(y_encoder_num_ls)
+    
+    X_img_decoder_ls = tf.ragged.stack(X_img_decoder_ls).to_tensor()
+    X_img_encoder_ls = tf.ragged.stack(X_img_encoder_ls).to_tensor()
+    y_img_encoder_ls = tf.ragged.stack(y_img_encoder_ls).to_tensor()
+        
+    
+    print(X_decoder_num_ls.shape, y_decoder_ls.shape, X_encoder_num_no_y_ls.shape, y_encoder_num_ls.shape, X_img_decoder_ls.shape, X_img_encoder_ls.shape, y_img_encoder_ls.shape)
+        
+    return X_decoder_num_ls, y_decoder_ls, X_encoder_num_no_y_ls, y_encoder_num_ls, X_img_decoder_ls, X_img_encoder_ls, y_img_encoder_ls
+                                 
+    
