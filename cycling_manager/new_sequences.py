@@ -45,11 +45,18 @@ def get_full_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen
         #split for typing
     X_encoder_num = X_encoder[X_encoder['result']<=num_cap].tail(maxlen_num)
     X_encoder_num_no_y = X_encoder_num.drop(columns='result')
-    y_encoder_num = X_encoder_num.result
+    y_encoder_num = X_encoder_num[['result']]
         
     if X_encoder.isna().sum().sum() > 0:
         print(Fore.RED + f"\n passed for {name, year, tour} due to nan" + Style.RESET_ALL)
         pass
+    
+    X_decoder_num = tf.convert_to_tensor(pad_sequences(X_decoder_num.to_numpy().T, maxlen=21, dtype='float', padding='post', value=-1000.).T)
+    y_decoder = tf.convert_to_tensor(pad_sequences(y_decoder.to_numpy().T, maxlen=21, dtype='float', padding='post', value=-1000.).T)
+    X_encoder_num = tf.convert_to_tensor(pad_sequences(X_encoder_num.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
+    X_encoder_num_no_y = tf.convert_to_tensor(pad_sequences(X_encoder_num_no_y.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
+    
+    y_encoder_num = tf.convert_to_tensor(pad_sequences(y_encoder_num.to_numpy().T, maxlen=maxlen_num, dtype='float', padding='post', value=-1000.).T)
     
     #if no image needed
     if img == False:
@@ -95,7 +102,6 @@ def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=Fals
     result_ls = []
     
     for race ,result in zip(list(X_encoder_img_ls), list(y_encoder_img_ls)):
-            print(race)
             img = cv2.imread(race)
             try:
                 img = tf.convert_to_tensor(img, dtype=tf.int16)
