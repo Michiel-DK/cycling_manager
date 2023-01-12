@@ -85,16 +85,16 @@ def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=Fals
     season_ls_img = []
     season_y_img = []
     to_drop_ls = []
+    tour_ls_img = []
     base_path = '../raw_data/img_300/'
     
-    for season, result in zip(X_encoder_img_ls, y_encoder_img_ls):
-        
-        season = [base_path+"_".join(race.split('/')[1:])+'.jpg' for race in season]
-        print(season)
-        img_ls = []
-        result_ls = []
+    X_encoder_img_ls = [base_path+"_".join(race.split('/')[1:])+'.jpg' for race in X_encoder_img_ls]
+    X_decoder_img_ls = [base_path+"_".join(race.split('/')[1:])+'.jpg' for race in X_decoder_img_ls]    
+
+    img_ls = []
+    result_ls = []
     
-        for race in season:
+    for race ,result in zip(list(X_encoder_img_ls), list(y_encoder_img_ls)):
             print(race)
             img = cv2.imread(race)
             try:
@@ -106,29 +106,27 @@ def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=Fals
                 to_drop_ls.append('race/'+race.split('/')[-1].split('.')[0].replace('_', '/'))
                 pass
         
-            season_ls_img.append(np.array(img_ls))
-            season_y_img.append(np.array(result_ls))
+    season_ls_img.append(np.array(img_ls))
+    season_y_img.append(np.array(result_ls))
     
     X_encoder_img = tf.ragged.stack(season_ls_img).to_tensor()
     y_encoder_img = tf.ragged.stack(season_y_img).to_tensor()
     
     to_drop_ls = list(dict.fromkeys(to_drop_ls))
     
-    if 1 == 1:
-        season = [base_path+"_".join(race.split('/')[1:])+'.jpg' for race in X_decoder_img_ls]    
-        img_ls = []
+    img_ls = []
         
-        for race in season:
-            img = cv2.imread(race)
-            try:
-                img = tf.convert_to_tensor(img)
-                img_ls.append(img)
-            except:
-                print(race)
+    for race in X_decoder_img_ls:
+        img = cv2.imread(race)
+        try:
+            img = tf.convert_to_tensor(img)
+            img_ls.append(img)
+        except:
+            print(race)
             
-        tour_ls_img.append(np.array(img_ls))
+    tour_ls_img.append(np.array(img_ls))
         
-    tour_ls_img = np.array(tour_ls_img)
+    X_decoder_img = tf.ragged.stack(tour_ls_img).to_tensor()
     
     if resnet:
         X_encoder_img = resnet50.preprocess_input(X_encoder_img)
