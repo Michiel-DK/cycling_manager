@@ -85,7 +85,7 @@ def get_num_sequence(df : pd.DataFrame, name, year, tour, maxlen_num=40, maxlen_
             return X_decoder_num, y_decoder, X_encoder_num, X_decoder_img_ls, X_encoder_img_ls
         
 
-def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=False):
+def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls):
     
     """Function to fetch images and set in sequences"""
 
@@ -102,22 +102,23 @@ def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=Fals
     result_ls = []
     
     for race ,result in zip(list(X_encoder_img_ls), list(y_encoder_img_ls)):
-            img = cv2.imread(race)
-            try:
-                img = tf.convert_to_tensor(img, dtype=tf.int16)
-                result = tf.convert_to_tensor(result, dtype=tf.float16)
-                img_ls.append(img)
-                result_ls.append(result)
-            except:
-                to_drop_ls.append('race/'+race.split('/')[-1].split('.')[0].replace('_', '/'))
-                pass
+        img = cv2.imread(race)
+        try:
+            img = tf.convert_to_tensor(img, dtype=tf.int16)
+            result = tf.convert_to_tensor(result, dtype=tf.float16)
+            img_ls.append(img)
+            result_ls.append(result)
+        except:
+            to_drop_ls.append('race/'+race.split('/')[-1].split('.')[0].replace('_', '/'))
+            pass
         
-    season_ls_img.append(np.array(img_ls))
-    season_y_img.append(np.array(result_ls))
-    
-    X_encoder_img = tf.ragged.stack(season_ls_img).to_tensor()
-    y_encoder_img = tf.ragged.stack(season_y_img).to_tensor()
-    
+    # season_ls_img.append(img_ls)
+    # season_y_img.append(result_ls)
+    # import ipdb; ipdb.set_trace()
+    # X_encoder_img = tf.ragged.stack(season_ls_img).to_tensor()
+    # y_encoder_img = tf.ragged.stack(season_y_img).to_tensor()
+    X_encoder_img = img_ls
+    y_encoder_img = result_ls
     to_drop_ls = list(dict.fromkeys(to_drop_ls))
     
     img_ls = []
@@ -132,17 +133,14 @@ def get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=Fals
             
     tour_ls_img.append(np.array(img_ls))
         
-    X_decoder_img = tf.ragged.stack(tour_ls_img).to_tensor()
-    
-    if resnet:
-        X_encoder_img = resnet50.preprocess_input(X_encoder_img)
-        X_decoder_img = resnet50.preprocess_input(X_decoder_img)
+    #X_decoder_img = tf.ragged.stack(tour_ls_img).to_tensor()
+    X_decoder_img = img_ls
             
     return X_encoder_img, X_decoder_img, y_encoder_img, to_drop_ls
 
 
 
-def get_full_sequence(df, riders, maxlen_num=40, maxlen_img=20, img=True, binary=True, y_encoder = True, num_cap=9999, img_cap=20):
+def get_full_sequence(df, riders, maxlen_num=40, maxlen_img=20, img=True, binary=True, y_encoder = True, num_cap=9999, img_cap=20, resnet=False):
     
     X_decoder_num_ls = []
     y_decoder_ls = []
@@ -162,7 +160,7 @@ def get_full_sequence(df, riders, maxlen_num=40, maxlen_img=20, img=True, binary
         
         else:
                                  
-            X_encoder_img, X_decoder_img, y_encoder_img, to_drop_ls = get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls, resnet=False)
+            X_encoder_img, X_decoder_img, y_encoder_img, to_drop_ls = get_images(X_decoder_img_ls, X_encoder_img_ls, y_encoder_img_ls)
             
             X_decoder_num_ls.append(X_decoder_num)
             y_decoder_ls.append(y_decoder)
@@ -182,6 +180,10 @@ def get_full_sequence(df, riders, maxlen_num=40, maxlen_img=20, img=True, binary
     X_img_decoder_ls = tf.ragged.stack(X_img_decoder_ls).to_tensor()
     X_img_encoder_ls = tf.ragged.stack(X_img_encoder_ls).to_tensor()
     y_img_encoder_ls = tf.ragged.stack(y_img_encoder_ls).to_tensor()
+    
+    if resnet:
+        X_img_decoder_ls = resnet50.preprocess_input(X_img_decoder_ls)
+        X_img_encoder_ls = resnet50.preprocess_input(X_img_encoder_ls)
         
     
     print(X_decoder_num_ls.shape, y_decoder_ls.shape, X_encoder_num_no_y_ls.shape, y_encoder_num_ls.shape, X_img_decoder_ls.shape, X_img_encoder_ls.shape, y_img_encoder_ls.shape)
